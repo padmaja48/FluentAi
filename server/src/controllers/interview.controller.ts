@@ -250,6 +250,13 @@ export const completeInterview = asyncHandler(async (req, res) => {
   }
 
   const interview = await getInterviewForUser(interviewId, req.userId);
+  if (interview.status === 'Completed') {
+    const report = await Report.findOne({ interviewId: interview._id }).sort({ createdAt: -1 });
+    await getRedis().del(`interview:${interview._id}:state`);
+    res.json({ interview, report });
+    return;
+  }
+
   const transcript = interview.questions.map((item) => ({
     question: item.question,
     answer: item.userAnswer,

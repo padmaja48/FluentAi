@@ -114,6 +114,11 @@
   transition: opacity 0.15s, background 0.15s;
 }
 
+.iv-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.58;
+}
+
 .iv-btn--primary {
   background: var(--accent);
   color: white;
@@ -133,6 +138,98 @@
 .iv-btn--danger {
   background: #dc2626;
   color: white;
+}
+
+.iv-btn--finish {
+  color: #b91c1c;
+  border-color: rgba(185, 28, 28, 0.22);
+}
+
+.iv-btn--finish:hover:not(:disabled) {
+  background: rgba(185, 28, 28, 0.08);
+}
+
+.iv-btn-loading {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  white-space: nowrap;
+}
+
+.iv-btn-spinner {
+  width: 14px;
+  height: 14px;
+  border-radius: 999px;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  opacity: 0.85;
+  animation: iv-spin 0.72s linear infinite;
+}
+
+.iv-loading-card {
+  display: inline-flex;
+  align-items: center;
+  gap: 1rem;
+  width: min(100%, 440px);
+  padding: 1rem 1.15rem;
+  margin-top: 1rem;
+  border: 1px solid color-mix(in srgb, var(--accent) 18%, var(--border));
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--surface) 92%, var(--accent) 8%);
+  box-shadow: 0 18px 45px rgba(15, 23, 42, 0.12);
+  color: var(--text);
+}
+
+.iv-loading-card h3 {
+  margin: 0 0 0.2rem;
+  font-size: 0.98rem;
+  font-weight: 650;
+}
+
+.iv-loading-card p {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 0.86rem;
+  line-height: 1.45;
+}
+
+.iv-loader-orbit {
+  position: relative;
+  width: 44px;
+  height: 44px;
+  flex: 0 0 44px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+}
+
+.iv-loader-orbit::before {
+  content: '';
+  position: absolute;
+  inset: 8px;
+  border-radius: inherit;
+  border: 2px solid color-mix(in srgb, var(--accent) 22%, transparent);
+}
+
+.iv-loader-orbit span {
+  position: absolute;
+  inset: 3px;
+  border-radius: inherit;
+  border: 2px solid transparent;
+  border-top-color: var(--accent);
+  animation: iv-spin 1s linear infinite;
+}
+
+.iv-loader-orbit span:nth-child(2) {
+  inset: 9px;
+  border-top-color: color-mix(in srgb, var(--accent) 70%, white);
+  animation-duration: 1.35s;
+  animation-direction: reverse;
+}
+
+.iv-loader-orbit span:nth-child(3) {
+  inset: 16px;
+  border-top-color: color-mix(in srgb, var(--accent) 50%, var(--text));
+  animation-duration: 0.9s;
 }
 
 /* ── Drop zone ─────────────────────────────────────────────────── */
@@ -354,6 +451,28 @@
   height: calc(100vh - 56px);
   background: var(--bg);
   overflow: hidden;
+  position: relative;
+}
+
+.iv-live--ending .iv-session-body,
+.iv-live--ending .iv-proctor-bar {
+  pointer-events: none;
+}
+
+.iv-ending-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  display: grid;
+  place-items: center;
+  padding: 1.5rem;
+  background: color-mix(in srgb, var(--bg) 72%, transparent);
+  backdrop-filter: blur(10px);
+}
+
+.iv-ending-overlay .iv-loading-card {
+  margin-top: 0;
+  background: color-mix(in srgb, var(--surface) 96%, var(--accent) 4%);
 }
 
 .iv-proctor-bar {
@@ -574,6 +693,10 @@
 @keyframes bar-pulse {
   from { opacity: 0.6; }
   to   { opacity: 1; }
+}
+
+@keyframes iv-spin {
+  to { transform: rotate(360deg); }
 }
 
 .voice-label {

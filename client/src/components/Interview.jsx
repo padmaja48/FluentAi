@@ -8,6 +8,25 @@ import '../styles/Interview.css';
 const STEPS = ['Resume', 'Persona', 'Config', 'System Check'];
 const MAX_VIOLATIONS = 3;
 
+function InterviewLoader({
+  title = 'Preparing interview',
+  message = 'Please wait while FluentAI sets up your session.',
+}) {
+  return (
+    <div className="iv-loading-card" role="status" aria-live="polite">
+      <div className="iv-loader-orbit" aria-hidden="true">
+        <span />
+        <span />
+        <span />
+      </div>
+      <div>
+        <h3>{title}</h3>
+        <p>{message}</p>
+      </div>
+    </div>
+  );
+}
+
 // ── Step 1: Resume Upload ─────────────────────────────────────────
 function ResumeStep({ onNext }) {
   const [uploading, setUploading] = useState(false);
@@ -309,9 +328,15 @@ function SystemCheckStep({ onStart, onBack, loading }) {
           disabled={!camOk || !agreed || loading}
           onClick={onStart}
         >
-          {loading ? 'Creating Interview…' : 'Start Interview'}
+          {loading ? <span className="iv-btn-loading"><span className="iv-btn-spinner" />Creating interview</span> : 'Start Interview'}
         </button>
       </div>
+      {loading && (
+        <InterviewLoader
+          title="Creating your interview"
+          message="Generating tailored questions and preparing the interviewer."
+        />
+      )}
     </div>
   );
 }
@@ -329,6 +354,7 @@ function LiveSession({ interview, persona, onComplete }) {
   const [terminated, setTerminated] = useState(false);
   const [timer, setTimer] = useState(interview.duration * 60 || 1800);
   const [interimText, setInterimText] = useState('');
+  const [ending, setEnding] = useState(false);
 
   const videoRef = useRef(null);
   const recognitionRef = useRef(null);
@@ -340,8 +366,72 @@ function LiveSession({ interview, persona, onComplete }) {
   const autoSubmittedRef = useRef(false);
   const ttsSourceRef = useRef(null);
   const animFrameRef = useRef(null);
+  const finishingRef = useRef(false);
+  const sessionClosedRef = useRef(false);
+
+  const stopListening = useCallback(async () => {
+    const recognition = recognitionRef.current;
+    recognitionRef.current = null;
+
+    if (recognition) {
+      try { recognition.onend = null; } catch {}
+      try { recognition.stop(); } catch {}
+      try { recognition.abort?.(); } catch {}
+    }
+
+    setIsListening(false);
+    setInterimText('');
+  }, []);
+
+  const stopSpeech = useCallback(() => {
+    cancelAnimationFrame(animFrameRef.current);
+    window.speechSynthesis?.cancel();
+
+    if (ttsSourceRef.current) {
+      try { ttsSourceRef.current.pause(); } catch {}
+      if (ttsSourceRef.current._blobUrl) {
+        URL.revokeObjectURL(ttsSourceRef.current._blobUrl);
+      }
+      ttsSourceRef.current.src = '';
+      ttsSourceRef.current = null;
+    }
+
+    setIsSpeaking(false);
+    setAudioLevel(0);
+  }, []);
+
+  const finishSession = useCallback(async ({ terminatedBySystem = false } = {}) => {
+    if (finishingRef.current) return;
+
+    finishingRef.current = true;
+    sessionClosedRef.current = true;
+    autoSubmittedRef.current = true;
+    setEnding(!terminatedBySystem);
+    clearInterval(timerRef.current);
+
+    await stopListening();
+    stopSpeech();
+
+    try {
+      await interviewAPI.completeInterview(interview._id);
+    } catch {}
+
+    if (document.fullscreenElement) {
+      try { await document.exitFullscreen(); } catch {}
+    }
+
+    if (terminatedBySystem) {
+      setTerminated(true);
+      setEnding(false);
+      return;
+    }
+
+    onComplete(interview._id);
+  }, [interview._id, onComplete, stopListening, stopSpeech]);
 
   const logViolation = useCallback(async (type, description) => {
+    if (sessionClosedRef.current || autoSubmittedRef.current) return;
+
     violationCountRef.current += 1;
     setViolations(violationCountRef.current);
     setViolationMsg(`Warning: ${description}`);
@@ -350,13 +440,10 @@ function LiveSession({ interview, persona, onComplete }) {
     } catch {}
     if (violationCountRef.current >= MAX_VIOLATIONS && !autoSubmittedRef.current) {
       autoSubmittedRef.current = true;
-      // Complete interview on server before showing terminated screen
-      try { await interviewAPI.completeInterview(interview._id); } catch {}
-      if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
-      setTerminated(true);
+      finishSession({ terminatedBySystem: true });
     }
     setTimeout(() => setViolationMsg(''), 4000);
-  }, [interview._id]);
+  }, [finishSession]);
 
   // Fullscreen + tab switch enforcement
   useEffect(() => {
@@ -454,18 +541,20 @@ function LiveSession({ interview, persona, onComplete }) {
 
   // Cleanup TTS audio on unmount
   useEffect(() => () => {
-    cancelAnimationFrame(animFrameRef.current);
-    window.speechSynthesis?.cancel();
-    if (ttsSourceRef.current) {
-      ttsSourceRef.current.pause();
-      ttsSourceRef.current.src = '';
-    }
-  }, []);
+    sessionClosedRef.current = true;
+    stopListening();
+    stopSpeech();
+  }, [stopListening, stopSpeech]);
 
   // Play base64 audio using <audio> element — reliable across all browsers/autoplay policies
   const playAudioBase64 = useCallback((audioBase64, contentType, onEnd) => {
     return new Promise((resolve) => {
       try {
+        if (sessionClosedRef.current) {
+          resolve();
+          return;
+        }
+
         // Stop any currently playing TTS
         if (ttsSourceRef.current) {
           ttsSourceRef.current.pause();
@@ -508,7 +597,7 @@ function LiveSession({ interview, persona, onComplete }) {
           setIsSpeaking(false);
           URL.revokeObjectURL(url);
           ttsSourceRef.current = null;
-          if (onEnd) onEnd();
+          if (!sessionClosedRef.current && onEnd) onEnd();
           resolve();
         };
 
@@ -517,7 +606,7 @@ function LiveSession({ interview, persona, onComplete }) {
           setIsSpeaking(false);
           URL.revokeObjectURL(url);
           ttsSourceRef.current = null;
-          if (onEnd) onEnd();
+          if (!sessionClosedRef.current && onEnd) onEnd();
           resolve();
         };
 
@@ -527,13 +616,13 @@ function LiveSession({ interview, persona, onComplete }) {
           ttsSourceRef.current = null;
           cancelAnimationFrame(animFrameRef.current);
           // Don't call setIsSpeaking(false) yet — speakWithWebSpeech will manage it
-          if (onEnd) onEnd();
+          if (!sessionClosedRef.current && onEnd) onEnd();
           resolve();
         });
       } catch (err) {
         console.error('playAudioBase64 error:', err);
         setIsSpeaking(false);
-        if (onEnd) onEnd();
+        if (!sessionClosedRef.current && onEnd) onEnd();
         resolve();
       }
     });
@@ -541,6 +630,8 @@ function LiveSession({ interview, persona, onComplete }) {
 
   // Speak current question — ElevenLabs via server, fallback to Web Speech
   const speakQuestion = useCallback(async (questionText, addToTranscript = true) => {
+    if (sessionClosedRef.current) return;
+
     if (addToTranscript) {
       setTranscript(prev => {
         // Avoid duplicate: don't add if the last interviewer message is identical
@@ -554,19 +645,24 @@ function LiveSession({ interview, persona, onComplete }) {
       const res = await interviewAPI.speak(interview._id, questionText, voiceStyle);
       const { audioBase64, contentType } = res.data;
 
+      if (sessionClosedRef.current) return;
+
       if (audioBase64 && contentType?.includes('audio')) {
         await playAudioBase64(audioBase64, contentType, () => startListening());
       } else {
         speakWithWebSpeech(questionText, () => startListening());
       }
     } catch {
-      speakWithWebSpeech(questionText, () => startListening());
+      if (!sessionClosedRef.current) {
+        speakWithWebSpeech(questionText, () => startListening());
+      }
     }
   }, [interview._id, persona, playAudioBase64]);
 
   // Reliable Web Speech API synthesis helper
   // useMale=true picks a male-sounding voice (for us-american and us-australian personas)
   const speakWithWebSpeech = useCallback((text, onEnd) => {
+    if (sessionClosedRef.current) return;
     if (!window.speechSynthesis) { onEnd?.(); return; }
     window.speechSynthesis.cancel();
     setIsSpeaking(true);
@@ -602,11 +698,14 @@ function LiveSession({ interview, persona, onComplete }) {
 
       if (chosen) utt.voice = chosen;
 
-      utt.onend = () => { setIsSpeaking(false); onEnd?.(); };
+      utt.onend = () => {
+        setIsSpeaking(false);
+        if (!sessionClosedRef.current) onEnd?.();
+      };
       utt.onerror = (e) => {
         if (e.error === 'interrupted' || e.error === 'canceled') return;
         setIsSpeaking(false);
-        onEnd?.();
+        if (!sessionClosedRef.current) onEnd?.();
       };
       // Chrome bug: speechSynthesis can get stuck — resume if paused
       if (window.speechSynthesis.paused) window.speechSynthesis.resume();
@@ -629,6 +728,8 @@ function LiveSession({ interview, persona, onComplete }) {
 
   // Speech recognition
   const startListening = () => {
+    if (sessionClosedRef.current || ending) return;
+
     const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SR) {
       setTranscript(prev => [...prev, { role: 'system', text: 'Speech recognition not supported. Please type your answer.' }]);
@@ -651,19 +752,21 @@ function LiveSession({ interview, persona, onComplete }) {
         setTranscript(prev => [...prev, { role: 'candidate', text: final }]);
       }
     };
-    rec.onend = () => setIsListening(false);
-    rec.start();
+    rec.onend = () => {
+      if (!sessionClosedRef.current) setIsListening(false);
+    };
+    try {
+      rec.start();
+    } catch {
+      setIsListening(false);
+      return;
+    }
     recognitionRef.current = rec;
     setIsListening(true);
   };
 
-  const stopListening = async () => {
-    if (recognitionRef.current) recognitionRef.current.stop();
-    setIsListening(false);
-    setInterimText('');
-  };
-
   const submitAnswer = async (answerText, skipped = false) => {
+    if (sessionClosedRef.current || ending) return;
     if (!answerText && !skipped) return;
     try {
       const q = questions[currentIdx]?.question || '';
@@ -674,16 +777,11 @@ function LiveSession({ interview, persona, onComplete }) {
       setCurrentIdx(next);
       speakQuestion(questions[next].question);
     } else {
-      handleFinish();
+      finishSession();
     }
   };
 
-  const handleFinish = async () => {
-    clearInterval(timerRef.current);
-    try { await interviewAPI.completeInterview(interview._id); } catch {}
-    if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
-    onComplete(interview._id);
-  };
+  const handleFinish = () => finishSession();
 
   const fmtTime = (s) => `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`;
   const currentQ = questions[currentIdx];
@@ -702,7 +800,15 @@ function LiveSession({ interview, persona, onComplete }) {
   }
 
   return (
-    <div className="iv-live">
+    <div className={`iv-live ${ending ? 'iv-live--ending' : ''}`}>
+      {ending && (
+        <div className="iv-ending-overlay">
+          <InterviewLoader
+            title="Ending interview"
+            message="Saving your responses and preparing your results."
+          />
+        </div>
+      )}
       {/* Proctor bar */}
       <div className="iv-proctor-bar">
         <video ref={videoRef} muted playsInline className="iv-pip" />
@@ -756,8 +862,10 @@ function LiveSession({ interview, persona, onComplete }) {
             <VoiceIndicator audioLevel={isListening ? audioLevel : 0} isActive={isListening} label="" color="blue" />
             <button
               className={`iv-btn ${isListening ? 'iv-btn--danger' : 'iv-btn--primary'}`}
+              disabled={ending}
               onMouseDown={startListening}
               onMouseUp={async () => {
+                if (ending) return;
                 await stopListening();
                 // Collect all candidate lines since the last interviewer message
                 const lastInterviewerIdx = [...transcript].reverse().findIndex(m => m.role === 'interviewer');
@@ -776,11 +884,11 @@ function LiveSession({ interview, persona, onComplete }) {
             <button className="iv-btn iv-btn--ghost" onClick={() => {
               stopListening();
               submitAnswer('', true);
-            }}>
+            }} disabled={ending}>
               Skip
             </button>
-            <button className="iv-btn iv-btn--ghost" onClick={handleFinish}>
-              End Interview
+            <button className="iv-btn iv-btn--ghost iv-btn--finish" onClick={handleFinish} disabled={ending}>
+              {ending ? <span className="iv-btn-loading"><span className="iv-btn-spinner" />Ending</span> : 'End Interview'}
             </button>
           </div>
         </div>
