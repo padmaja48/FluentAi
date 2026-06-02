@@ -1,0 +1,709 @@
+/* ── Interview Shell ───────────────────────────────────────────── */
+.iv-container {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem 4rem;
+}
+
+/* ── Stepper ───────────────────────────────────────────────────── */
+.iv-stepper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 28px;
+  margin-bottom: 2.75rem;
+}
+
+.iv-step-dot {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+  position: relative;
+  min-width: 88px;
+}
+
+.iv-step-dot:not(:last-child)::after {
+  content: '';
+  position: absolute;
+  top: 14px;
+  left: calc(50% + 18px);
+  width: calc(100% + 10px);
+  height: 2px;
+  background: var(--border);
+}
+
+.iv-step-dot--done::after { background: var(--accent); }
+
+.iv-step-num {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 2px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: 600;
+  background: var(--surface);
+  color: var(--text-muted);
+  z-index: 1;
+}
+
+.iv-step-dot--active .iv-step-num {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: white;
+}
+
+.iv-step-dot--done .iv-step-num {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: white;
+}
+
+.iv-step-label {
+  font-size: 0.72rem;
+  color: var(--text2);
+  margin-top: 4px;
+  line-height: 1.2;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.iv-step-dot--active .iv-step-label { color: var(--accent); font-weight: 600; }
+
+/* ── Step layout ───────────────────────────────────────────────── */
+.iv-step {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 2rem 2rem 1.5rem;
+}
+
+.iv-step-title {
+  font-size: 1.4rem;
+  font-weight: 650;
+  color: var(--text);
+  margin: 0 0 0.4rem;
+}
+
+.iv-step-desc {
+  color: var(--text-muted);
+  margin: 0 0 1.5rem;
+  font-size: 0.9rem;
+}
+
+.iv-step-actions {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: flex-end;
+  margin-top: 1.5rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--border);
+}
+
+/* ── Buttons ───────────────────────────────────────────────────── */
+.iv-btn {
+  padding: 0.55rem 1.25rem;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: opacity 0.15s, background 0.15s;
+}
+
+.iv-btn--primary {
+  background: var(--accent);
+  color: white;
+}
+
+.iv-btn--primary:hover:not(:disabled) { opacity: 0.85; }
+.iv-btn--primary:disabled { opacity: 0.45; cursor: not-allowed; }
+
+.iv-btn--ghost {
+  background: transparent;
+  color: var(--text-muted);
+  border-color: var(--border);
+}
+
+.iv-btn--ghost:hover { background: var(--bg); }
+
+.iv-btn--danger {
+  background: #dc2626;
+  color: white;
+}
+
+/* ── Drop zone ─────────────────────────────────────────────────── */
+.iv-drop-zone {
+  border: 2px dashed var(--border);
+  border-radius: 10px;
+  padding: 2.5rem 2rem;
+  text-align: center;
+  cursor: pointer;
+  color: var(--text-muted);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  transition: border-color 0.2s;
+  margin-bottom: 1rem;
+}
+
+.iv-drop-zone:hover { border-color: var(--accent); }
+.iv-drop-zone--loading { opacity: 0.6; cursor: wait; }
+
+.iv-drop-icon { font-size: 2rem; }
+.iv-drop-success { color: var(--accent); font-weight: 600; font-size: 1rem; }
+
+.iv-resume-preview {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+  margin-bottom: 1rem;
+  font-size: 0.85rem;
+  color: var(--text);
+}
+
+.iv-resume-history { margin-bottom: 1rem; }
+.iv-resume-history-label { font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.5rem; }
+
+/* ── Persona grid ──────────────────────────────────────────────── */
+.iv-persona-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+@media (max-width: 640px) {
+  .iv-persona-grid { grid-template-columns: 1fr; }
+}
+
+.iv-persona-card {
+  border: 2px solid var(--border);
+  border-radius: 10px;
+  padding: 1rem;
+  cursor: pointer;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.iv-persona-card:hover { border-color: var(--accent); }
+.iv-persona-card--selected { border-color: var(--accent); background: var(--bg); }
+
+.iv-persona-avatar {
+  width: 120px;
+  height: 140px;
+  margin: 0 auto;
+  overflow: hidden;
+}
+
+/* Scale down AvatarPortrait inside persona selection cards */
+.iv-persona-avatar .avatar-portrait-wrapper {
+  padding: 4px;
+  gap: 0;
+  border-radius: 10px;
+}
+
+.iv-persona-avatar .avatar-img-container {
+  width: 110px;
+  height: 110px;
+  border-radius: 10px;
+}
+
+.iv-persona-avatar .avatar-nametag,
+.iv-persona-avatar .avatar-status-badge,
+.iv-persona-avatar .avatar-glow-ring {
+  display: none;
+}
+
+.iv-persona-info { text-align: center; }
+.iv-persona-flag { font-size: 1.25rem; }
+.iv-persona-name { font-size: 1rem; font-weight: 700; margin: 0.25rem 0 0; color: var(--text); }
+.iv-persona-title { font-size: 0.78rem; color: var(--text-muted); margin: 0.2rem 0; }
+.iv-persona-accent { font-size: 0.75rem; color: var(--accent); font-weight: 500; }
+.iv-persona-personality { font-size: 0.75rem; color: var(--text-muted); margin-top: 0.4rem; font-style: italic; }
+
+.iv-persona-check {
+  position: absolute;
+  top: 8px;
+  right: 10px;
+  color: var(--accent);
+  font-weight: 700;
+  font-size: 1rem;
+}
+
+/* ── Config form ───────────────────────────────────────────────── */
+.iv-config-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.iv-label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.iv-input {
+  width: 100%;
+  padding: 0.55rem 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 0.9rem;
+  outline: none;
+}
+
+.iv-input:focus { border-color: var(--accent); }
+
+.iv-toggle-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.iv-toggle-btn {
+  padding: 0.4rem 0.9rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg);
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 0.85rem;
+  transition: all 0.15s;
+}
+
+.iv-toggle-btn--active {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: white;
+}
+
+/* ── System check ──────────────────────────────────────────────── */
+.iv-sys-check {
+  display: flex;
+  gap: 1.5rem;
+  align-items: flex-start;
+  margin-bottom: 1.25rem;
+}
+
+.iv-cam-preview {
+  flex: 0 0 200px;
+}
+
+.iv-cam-video {
+  width: 200px;
+  height: 150px;
+  border-radius: 8px;
+  background: #000;
+  object-fit: cover;
+  border: 1px solid var(--border);
+}
+
+.iv-check-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.iv-check-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+.iv-check-item--ok { color: var(--text); }
+.iv-check-icon { font-size: 1rem; color: var(--accent); }
+
+.iv-mic-bars { margin-top: 0.5rem; }
+
+.iv-agree-label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  color: var(--text-muted);
+  cursor: pointer;
+  margin-bottom: 0.5rem;
+}
+
+/* ── Live Session ──────────────────────────────────────────────── */
+/* Live session must fill the content-area without scrolling.
+   content-area has padding: 24px, so we pull it out with negative margin
+   and set exact height = available (parent flex: 1 minus topbar 56px). */
+.iv-live {
+  display: flex;
+  flex-direction: column;
+  /* Pull out of content-area padding so we fill edge-to-edge */
+  margin: -24px;
+  /* Fill the full available height under the topbar */
+  height: calc(100vh - 56px);
+  background: var(--bg);
+  overflow: hidden;
+}
+
+.iv-proctor-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.35rem 1rem;
+  background: #0f1117;
+  border-bottom: 1px solid #2a2d3a;
+  color: #ccc;
+  font-size: 0.82rem;
+  flex-shrink: 0;
+  min-height: 44px;
+}
+
+.iv-pip {
+  width: 64px;
+  height: 48px;
+  border-radius: 4px;
+  background: #000;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.iv-timer { font-variant-numeric: tabular-nums; font-weight: 600; color: #eee; }
+.iv-timer[data-warn='true'] { color: #f87171; }
+.iv-q-counter { color: #999; }
+.iv-rec-dot { color: #f87171; }
+.iv-violation-count { margin-left: auto; color: #fbbf24; }
+
+.iv-violation-banner {
+  background: #7f1d1d;
+  color: #fecaca;
+  text-align: center;
+  padding: 0.4rem;
+  font-size: 0.85rem;
+}
+
+.iv-session-body {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+/* Avatar panel */
+.iv-avatar-panel {
+  flex: 0 0 240px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  padding: 1rem;
+  border-right: 1px solid var(--border);
+  background: var(--surface);
+  overflow: hidden;
+}
+
+.iv-avatar-wrap {
+  width: 180px;
+  height: 216px;
+}
+
+.iv-persona-tag {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  margin: 0;
+}
+
+/* Transcript panel */
+.iv-transcript-panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding: 0.75rem;
+  gap: 0.5rem;
+  min-width: 0;
+}
+
+.iv-transcript-scroll {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding-right: 0.5rem;
+}
+
+.iv-msg {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  max-width: 85%;
+}
+
+.iv-msg--interviewer { align-self: flex-start; }
+.iv-msg--candidate { align-self: flex-end; }
+.iv-msg--system { align-self: center; opacity: 0.6; }
+.iv-msg--interim { align-self: flex-end; opacity: 0.5; font-style: italic; }
+
+.iv-msg-role {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+.iv-msg-text {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.9rem;
+  color: var(--text);
+}
+
+.iv-msg--candidate .iv-msg-text {
+  background: var(--accent);
+  color: white;
+  border-color: var(--accent);
+}
+
+.iv-current-q {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.82rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  flex-shrink: 0;
+}
+
+.iv-current-q-label { font-size: 0.72rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase; }
+.iv-current-q-text { color: var(--text); font-weight: 500; }
+
+.iv-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-shrink: 0;
+  flex-wrap: nowrap;
+}
+
+/* ── Terminated modal ──────────────────────────────────────────── */
+.iv-terminated {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  gap: 1rem;
+  text-align: center;
+  padding: 2rem;
+}
+
+.iv-terminated h2 { color: #dc2626; font-size: 1.5rem; }
+.iv-terminated p { color: var(--text-muted); }
+
+/* ── Shared utils ──────────────────────────────────────────────── */
+.iv-error {
+  color: #dc2626;
+  font-size: 0.85rem;
+  margin: 0.5rem 0;
+  background: #fee2e2;
+  border-radius: 6px;
+  padding: 0.5rem 0.75rem;
+}
+
+.iv-error--center { text-align: center; }
+
+/* ── Avatar SVG animations ─────────────────────────────────────── */
+@keyframes blink {
+  0%, 88%, 100% { transform: scaleY(0); }
+  92%, 96%      { transform: scaleY(1); }
+}
+
+.left-eyelid  { animation: blink 4s infinite; }
+.right-eyelid { animation: blink 4s infinite; animation-delay: 0.08s; }
+
+@keyframes breathe {
+  0%, 100% { transform: scaleY(1); }
+  50%      { transform: scaleY(1.015); }
+}
+
+.avatar-svg { animation: breathe 3.2s ease-in-out infinite; transform-origin: bottom center; }
+
+/* ── Voice Indicator ───────────────────────────────────────────── */
+.voice-indicator {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.voice-bars {
+  display: flex;
+  align-items: flex-end;
+  gap: 3px;
+  height: 40px;
+}
+
+.voice-bar {
+  width: 5px;
+  border-radius: 3px;
+  background: var(--accent);
+  transition: height 0.1s ease;
+  min-height: 6px;
+}
+
+.voice-indicator--active .voice-bar {
+  animation: bar-pulse 0.6s ease-in-out infinite alternate;
+}
+
+.voice-indicator[data-color='blue'] .voice-bar { background: #60a5fa; }
+
+@keyframes bar-pulse {
+  from { opacity: 0.6; }
+  to   { opacity: 1; }
+}
+
+.voice-label {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+}
+
+/* ── AvatarPortrait ─────────────────────────────────────────────── */
+.avatar-portrait-wrapper {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 10px;
+  border-radius: var(--radius2);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  transition: box-shadow 0.3s ease, border-color 0.3s;
+}
+
+.avatar-portrait-wrapper.speaking {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent-glow);
+}
+
+.avatar-portrait-wrapper.listening {
+  border-color: var(--border2);
+  box-shadow: 0 0 0 2px rgba(14,165,233,0.1);
+}
+
+.avatar-glow-ring {
+  position: absolute;
+  inset: -3px;
+  border-radius: 14px;
+  border: 2px solid transparent;
+  pointer-events: none;
+  transition: border-color 0.3s;
+}
+
+.avatar-glow-ring.active {
+  border-color: var(--accent);
+  animation: pulse-ring 1.8s ease-in-out infinite;
+}
+
+@keyframes pulse-ring {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.4; }
+}
+
+/* SVG face container — rounded rectangle, not circle, so face proportions show properly */
+.avatar-img-container {
+  position: relative;
+  width: 150px;
+  height: 150px;
+  border-radius: 14px;
+  overflow: hidden;
+  border: 2px solid var(--border);
+  background: var(--surface2);
+  flex-shrink: 0;
+}
+
+.avatar-img-container svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* Photo avatar — fills container, face centred */
+.avatar-img-container--photo {
+  border-radius: 14px;
+}
+
+.avatar-photo {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center top;
+  display: block;
+  border-radius: 0;
+  user-select: none;
+  pointer-events: none;
+}
+
+/* Blink is now handled directly in SVG — no overlay needed */
+
+/* Nametag */
+.avatar-nametag {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  text-align: center;
+}
+
+.avatar-name {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.avatar-flag { font-size: 14px; }
+
+.avatar-title {
+  font-size: 12px;
+  color: var(--text2);
+}
+
+/* Status badge */
+.avatar-status-badge {
+  font-size: 12px;
+  font-weight: 600;
+  padding: 3px 12px;
+  border-radius: 999px;
+  letter-spacing: 0.02em;
+  border: 1px solid var(--border);
+}
+
+.badge-speaking  {
+  background: var(--accent-dim);
+  color: var(--accent);
+  border-color: var(--accent);
+}
+.badge-listening {
+  background: rgba(63,185,80,0.08);
+  color: var(--success);
+  border-color: var(--success);
+}
+.badge-idle {
+  background: transparent;
+  color: var(--text2);
+  border-color: var(--border);
+}
