@@ -6,6 +6,6 @@ describe('health endpoint', () => {
     const response = await request(createApp()).get('/api/health').expect(200);
 
     expect(response.body.status).toBe('ok');
-    expect(response.body.service).toBe('ai-mock-interview-platform');
+    expect(response.body.service).toBe('fluentai');
   });
 });

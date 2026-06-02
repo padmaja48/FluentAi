@@ -10,8 +10,8 @@ const bootstrap = async () => {
   await connectDatabase();
 
   const app = createApp();
-  const server = app.listen(env.PORT, () => {
-    logger.info(`Server running on http://localhost:${env.PORT}`);
+  const server = app.listen(env.PORT, '0.0.0.0', () => {
+    logger.info(`Server running on http://0.0.0.0:${env.PORT}`);
   });
 
   const workers = env.NODE_ENV === 'test' ? [] : [startEmailWorker(), startReminderWorker()];
